@@ -10,7 +10,7 @@ It's possible to calculate the time on Mars using the JavaScript Date object, bu
 
 While the world has moved on from the [Julian Calendar](https://en.wikipedia.org/wiki/Julian_calendar) to the [Gregorian Calendar](https://en.wikipedia.org/wiki/Gregorian_calendar), science still keeps a raw reckoning of days in the form of the [Julian Day](https://en.wikipedia.org/wiki/Julian_day) Number (JDN). This count of days is used by astronomers and programmers to easily determine the number of days between things. Day 0 began at noon, January 1<sup>st</sup>, 4713 BC in the Julian Calendar (November 24<sup>th</sup>, 4714 BC in the Gregorian Calendar). It was a Monday. The Julian Date (JD) is the number of days since that fateful Monday.
 
-To convert between Unix Time and JD we need 𝕄𝕒𝕥𝕙® First we need to convert our milliseconds since Jan 1, 1970 to days so we multiply it by the number of milliseconds in a day: 86,400,000 
+To convert between Unix Time and JD we need 𝕄𝕒𝕥𝕙® First we need to convert our milliseconds since Jan 1, 1970 to days so we divide it by the number of milliseconds in a day: 86,400,000 
 
 `unixTime / 86400000`
 
