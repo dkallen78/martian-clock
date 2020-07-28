@@ -94,10 +94,10 @@ function makeNumbers(parent, number) {
     parent.appendChild(numero);
   }
 
-  /*setTimeout(function() {
-    let time = new Date();
-    illuminateHour(time.getHours());
-  }, 100);*/
+  setTimeout(function() {
+    let time = martianTime(Date.now())
+    illuminateHour(parseInt(time[3]));
+  }, 100);
 
 }
 
@@ -166,7 +166,7 @@ function flicker() {
   }, getRandomNumber(0, 100));
 }
 
-/*function illuminateHour(hour) {
+function illuminateHour(hour) {
   //----------------------------------------------------//
   //Adds an illumination effect to the current hour     //
   //integer-> hour: the current hour from 0-23          //
@@ -179,7 +179,92 @@ function flicker() {
   let numbers = document.getElementsByClassName("numbers");
   numbers[oldHour].style.filter = "";
   numbers[newHour].style.filter = "drop-shadow(0 0 .5vh aqua)";
-}*/
+}
+
+function martianTime(now) {
+  //----------------------------------------------------//
+  //Calculates the Coordinated Martian Time based on    //
+  //the Mars Sol Date (MSD)                             //
+  //integer-> now: ms since Jan 1, 1970                 //
+  //----------------------------------------------------//
+
+  function julianDateUTC(now) {
+    //----------------------------------------------------//
+    //Calculates the Julian Date (JD) based on            //
+    //milliseconds elapsed since the start of the         //
+    //Unix epoch (00:00 Jan 1, 1970)                      //
+    //integer-> now: ms since Jan 1, 1970                 //
+    //----------------------------------------------------//
+
+    //
+    //Days between start of Julian epoch and start of Unix epoch
+    const j2u = 2440587.5;
+
+    return (now / mspd) + j2u;
+  }
+
+  function julianDateTT(now) {
+    //----------------------------------------------------//
+    //Calculates the Terrestrial Time (TT) based on       //
+    //the JD                                              //
+    //integer-> now: ms since Jan 1, 1970                 //
+    //----------------------------------------------------//
+
+    //
+    //Leap Seconds
+    const ls = 37;
+
+    //
+    //Difference in seconds between Terrestrial Time (TT)
+    //and International Atomic Time (TIA)
+    const dif = 32.184;
+
+    return (julianDateUTC(now) + ((ls + dif) / spd));
+  }
+
+  function marsSolDate(now) {
+    //----------------------------------------------------//
+    //Calculates the Mars Sol Date (MSD) based on         //
+    //the TT                                              //
+    //integer-> now: ms since Jan 1, 1970                 //
+    //----------------------------------------------------//
+
+    //
+    //Dahys between start of Julian epoch
+    //and start of Martian epoch
+    const j2m = 2405522.0028779;
+
+    //
+    //Ration of length of Earth day to Martian Sol
+    const solRatio = 1.0274912517;
+
+    return ((julianDateTT(now) - j2m) / solRatio);
+  }
+
+  //
+  //Milliseconds in a day
+  const mspd = 86400000;
+
+  //
+  //Seconds per day
+  const spd = 86400;
+
+  let sols = marsSolDate(now);
+
+  let exactHours = ((sols % 1) * 24);
+  let hours = Math.floor(exactHours).toString().padStart(2, 0);
+
+  let exactMinutes = ((sols % 1) * 1440);
+  let minutes = (Math.floor(exactMinutes) % 60).toString().padStart(2, 0);
+
+  let exactSeconds = ((sols % 1) * spd);
+  let seconds = (Math.floor(exactSeconds) % 60).toString().padStart(2, 0);
+
+  let milliseconds = ((sols % 1) * mspd);
+  let ms = (Math.floor(milliseconds) % 1000).toString().padStart(2, 0);
+
+  return [ms, seconds, minutes, hours];
+}
 
 //
 //The clock element in the HTML document
@@ -189,7 +274,7 @@ let clock = document.getElementById("clock");
 //Makes the big SVG element to put in
 //the HTML document
 let svg = makeSVG("svg", "svgClock");
-let svgNS = svg.namespaceURI;
+clock.appendChild(svg);
 
 //
 //Sets up the face of the clock
@@ -217,9 +302,6 @@ let hands = makeSVG("defs");
 hands.appendChild(handGrad);
 svg.appendChild(hands);
 
-/*addStop(gradient, "0%", "dodgerBlue");
-addStop(gradient, "100%", "aqua");*/
-
 //
 //This is the shadow filter for the hands
 let handShadows = makeSVG("defs");
@@ -243,102 +325,21 @@ let hHandShadow = makeHandShadow(svg, "hHandShadow");
 let hHand = makeHand(svg, "hHand");
 
 //
-//Puts the center onto the face and puts
-//everything onto the page
+//Puts the center onto the face, above the
+//hands so no shadow falls on it
 makeCenter(svg);
-clock.appendChild(svg);
 
-let numbers = document.getElementsByClassName("numbers");
+
+//let numbers = document.getElementsByClassName("numbers");
 let digitalTime = makeSVG("text", "digitalTime");
 digitalTime.setAttribute("textLength", "50%");
 svg.appendChild(digitalTime);
+//clock.appendChild(svg);
 
-//
-//Will update the clock face at 100Hz
 let hourCheck = null;
 let working = false;
-
-function julianDateUTC(now) {
-  //----------------------------------------------------//
-  //Calculates the Julian Date (JD) based on            //
-  //milliseconds elapsed since the start of the         //
-  //Unix epoch (00:00 Jan 1, 1970)                      //
-  //integer-> now: ms since Jan 1, 1970                 //
-  //----------------------------------------------------//
-
-  //
-  //Days between start of Julian epoch and start of Unix epoch
-  const j2u = 2440587.5;
-
-  return (now / mspd) + j2u;
-}
-
-function julianDateTT(now) {
-  //----------------------------------------------------//
-  //Calculates the Terrestrial Time (TT) based on       //
-  //the JD                                              //
-  //integer-> now: ms since Jan 1, 1970                 //
-  //----------------------------------------------------//
-
-  //
-  //Leap Seconds
-  const ls = 37;
-
-  //
-  //Difference in seconds between Terrestrial Time (TT)
-  //and International Atomic Time (TIA)
-  const dif = 32.184;
-
-  return (julianDateUTC(now) + ((ls + dif) / spd));
-}
-
-function marsSolDate(now) {
-  //----------------------------------------------------//
-  //Calculates the Mars Sol Date (MSD) based on         //
-  //the TT                                              //
-  //integer-> now: ms since Jan 1, 1970                 //
-  //----------------------------------------------------//
-
-  //
-  //Dahys between start of Julian epoch
-  //and start of Martian epoch
-  const j2m = 2405522.0028779;
-
-  //
-  //Ration of length of Earth day to Martian Sol
-  const solRatio = 1.0274912517;
-
-  return ((julianDateTT(now) - j2m) / solRatio);
-}
-
-function martianTime(now) {
-  //console.clear();
-
-  let sols = marsSolDate(now);
-
-  let exactHours = ((sols % 1) * 24);
-  let hours = Math.floor(exactHours).toString().padStart(2, 0);
-
-  let exactMinutes = ((sols % 1) * 1440);
-  let minutes = (Math.floor(exactMinutes) % 60).toString().padStart(2, 0);
-
-  let exactSeconds = ((sols % 1) * spd);
-  let seconds = (Math.floor(exactSeconds) % 60).toString().padStart(2, 0);
-
-  let milliseconds = ((sols % 1) * mspd);
-  let ms = (Math.floor(milliseconds) % 1000).toString().padStart(2, 0);
-
-  return [ms, seconds, minutes, hours];
-}
-
 //
-//Milliseconds in a day
-const mspd = 86400000;
-
-//
-//Seconds per day
-const spd = 86400;
-
+//Will update the clock face at 100Hz
 let refreshInterval = setInterval(function() {
   //
   //Determines if the numbers will "flicker"
@@ -348,9 +349,7 @@ let refreshInterval = setInterval(function() {
     flicker();
   }
 
-  let time = new Date();
-
-  let times = martianTime(time.getTime());
+  let times = martianTime(Date.now());
 
   //
   //Does the work of moving the second hand
@@ -375,17 +374,14 @@ let refreshInterval = setInterval(function() {
 
   //
   //Gets and formats the numbers for the "digital" display
-  /*let hour = time.getHours().toString(6).padStart(2, 0);
-  let minute = time.getMinutes().toString(6).padStart(3, 0);
-  let second = time.getSeconds().toString(6).padStart(3, 0);*/
   let timeString = times[3] + ":" + times[2] + ":" + times[1];
 
   digitalTime.textContent = timeString;
 
   //
   //Checks to see if the current hour is "illuminated"
-  /*if (times[3] !== hourCheck) {
-    hourCheck = times[3];
-    illuminateHour(times[3]);
-  }*/
+  if (parseInt(times[3]) !== hourCheck) {
+    hourCheck = parseInt(times[3]);
+    illuminateHour(parseInt(times[3]));
+  }
 }, 10);
